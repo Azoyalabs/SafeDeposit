@@ -9,6 +9,9 @@ pub enum ContractError {
     #[error("Never")]
     Never {},
 
+    #[error("Not Implemented")]
+    NotImplemented {},
+
     #[error("Invalid Deposit Beneficiary {beneficiary}")]
     InvalidDepositBeneficiary { beneficiary: String },
 
@@ -23,6 +26,33 @@ pub enum ContractError {
 
     #[error("Cw20 not Accepted {token_address}")]
     Cw20NotAccepted { token_address: String },
+
+    #[error("Not enough funds available for lock {currency_identifier} (available: {available}, required: {required})")]
+    InsufficientFundsAvailableForLock {
+        currency_identifier: String,
+        available: String,
+        required: String,
+    },
+
+    #[error("Not enough funds available for unlock {currency_identifier} (available: {available}, required: {required})")]
+    InsufficientFundsLockedForUnlock {
+        currency_identifier: String,
+        available: String,
+        required: String,
+    },
+
+    #[error("Not enough funds locked for transfers {currency_identifier} (available: {available}, required: {required})")]
+    InsufficientFundsLockedForTransfer {
+        currency_identifier: String,
+        available: String,
+        required: String,
+    },
+
+    #[error("No Account found for the pair ({owner}, {currency_identifier})")]
+    AccountNotFound {
+        owner: String,
+        currency_identifier: String,
+    },
 
     #[error("Cannot set to own account")]
     CannotSetOwnAccount {},

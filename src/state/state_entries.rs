@@ -5,6 +5,7 @@ use crate::structs::CurrencyAccount;
 
 // authorizations
 pub const ADMIN: Item<Addr> = Item::new("admin");
+pub const AUTHORIZED_HANDLERS: Map<Addr, bool> = Map::new("authorized_handlers");
 
 pub const VALID_CURRENCIES: Item<Vec<String>> = Item::new("valid_currencies");
 
