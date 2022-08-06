@@ -3,8 +3,8 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use safe_deposit::instantiation::msg::InstantiateMsg;
 use safe_deposit::execute_messages::msg::ExecuteMsg; //, QueryMsg};
+use safe_deposit::instantiation::msg::InstantiateMsg;
 use safe_deposit::query::query_message::QueryMsg;
 
 //CountResponse

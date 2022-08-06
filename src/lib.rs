@@ -4,8 +4,8 @@ pub mod contract;
 mod contract_tests;
 mod error;
 
-pub mod instantiation;
 pub mod execute_messages;
+pub mod instantiation;
 
 pub mod execute;
 pub mod query;

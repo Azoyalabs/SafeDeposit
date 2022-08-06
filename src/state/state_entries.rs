@@ -1,9 +1,12 @@
-
 use cosmwasm_std::Addr;
 use cw_storage_plus::{Item, Map};
+
+use crate::structs::CurrencyAccount;
 
 // authorizations
 pub const ADMIN: Item<Addr> = Item::new("admin");
 
+pub const VALID_CURRENCIES: Item<Vec<String>> = Item::new("valid_currencies");
 
-pub const SAMPLE_REGISTRATION_STATUS: Map<Addr, bool> = Map::new("sample_registration_status");
+// balance using beneficiary identifier and identifier for currency
+pub const BALANCES: Map<(String, String), CurrencyAccount> = Map::new("balances");

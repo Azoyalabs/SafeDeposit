@@ -1,10 +1,7 @@
 #[cfg(test)]
 mod tests {
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info, MockApi, MockQuerier};
-    use cosmwasm_std::{
-        coins, MemoryStorage, OwnedDeps,
-    };
-
+    use cosmwasm_std::{coins, MemoryStorage, OwnedDeps};
 
     use crate::contract::instantiate;
     use crate::instantiation::msg::InstantiateMsg;

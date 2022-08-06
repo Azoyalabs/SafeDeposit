@@ -9,8 +9,20 @@ pub enum ContractError {
     #[error("Never")]
     Never {},
 
+    #[error("Invalid Deposit Beneficiary {beneficiary}")]
+    InvalidDepositBeneficiary { beneficiary: String },
+
     #[error("Unauthorized")]
     Unauthorized {},
+
+    #[error("Storage Item does not exist: {identifier}")]
+    StorageItemNotExist { identifier: String },
+
+    #[error("Native Currency not Accepted {denom}")]
+    NativeCurrencyNotAccepted { denom: String },
+
+    #[error("Cw20 not Accepted {token_address}")]
+    Cw20NotAccepted { token_address: String },
 
     #[error("Cannot set to own account")]
     CannotSetOwnAccount {},
@@ -36,5 +48,4 @@ pub enum ContractError {
 
     #[error("Funds amount invalid")]
     InvalidFundsAmount {},
-
 }

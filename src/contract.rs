@@ -13,7 +13,6 @@ use crate::query::query_message::QueryMsg;
 
 use crate::error::ContractError;
 
-
 //use cw2::{set_contract_version, get_contract_version, ContractVersion};
 use cw2::set_contract_version;
 
