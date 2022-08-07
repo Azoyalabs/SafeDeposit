@@ -2,7 +2,7 @@
 mod tests {
     use std::str::FromStr;
 
-    use cosmwasm_std::{coin, Addr, Empty, Uint128};
+    use cosmwasm_std::{coin, to_binary, Addr, Empty, Uint128};
 
     use cw20::Cw20Coin;
     use cw_multi_test::{App, BankSudo, Contract, ContractWrapper, Executor};
@@ -213,6 +213,44 @@ mod tests {
     }
 
     #[test]
+    fn deposit_cw20_currency_receive_hook() {
+        let (mut app, contract_address) = setup_env();
+
+        let cw_address = create_cw20(
+            &mut app,
+            TEST_DENOM_CW20,
+            "cwtest",
+            TEST_CREATOR.clone(),
+            5000000,
+        );
+
+        let owner = Addr::unchecked(TEST_CREATOR);
+
+        let admin_msg = AdminExecuteMsg::AddValidCurrency {
+            currency_id: cw_address.to_string(),
+        };
+        let msg = ExecuteMsg::Admin(admin_msg);
+
+        let _res = app
+            .execute_contract(owner.clone(), contract_address.clone(), &msg, &[])
+            .unwrap();
+
+        // encode beneficiary
+        let beneficiary_data = to_binary(&owner.clone().to_string()).unwrap();
+        let msg = cw20_base::msg::ExecuteMsg::Send {
+            contract: contract_address.clone().into_string(),
+            amount: Uint128::from_str("500000").unwrap(),
+            msg: beneficiary_data,
+        };
+
+        let _res = app
+            .execute_contract(owner.clone(), cw_address.clone(), &msg, &[])
+            .unwrap();
+
+        //let msg = AdminExecuteMsg::
+    }
+
+    #[test]
     fn deposit_cw20_currency_allowances() {
         let (mut app, contract_address) = setup_env();
 
@@ -256,5 +294,104 @@ mod tests {
             .unwrap();
 
         //let msg = AdminExecuteMsg::
+    }
+
+    #[test]
+    fn withdraw_cw20_currency_after_allowance_deposit() {
+        let (mut app, contract_address) = setup_env();
+
+        let cw_address = create_cw20(
+            &mut app,
+            TEST_DENOM_CW20,
+            "cwtest",
+            TEST_CREATOR.clone(),
+            5000000,
+        );
+
+        let owner = Addr::unchecked(TEST_CREATOR);
+
+        let admin_msg = AdminExecuteMsg::AddValidCurrency {
+            currency_id: cw_address.to_string(),
+        };
+        let msg = ExecuteMsg::Admin(admin_msg);
+
+        let _res = app
+            .execute_contract(owner.clone(), contract_address.clone(), &msg, &[])
+            .unwrap();
+
+        // need allowances
+        let msg = cw20_base::msg::ExecuteMsg::IncreaseAllowance {
+            spender: contract_address.clone().into_string(),
+            amount: Uint128::from_str("500000").unwrap(),
+            expires: None,
+        };
+        let _res = app
+            .execute_contract(owner.clone(), cw_address.clone(), &msg, &[])
+            .unwrap();
+
+        let msg = ExecuteMsg::DepositCw20 {
+            sender: owner.clone().into(),
+            beneficiary: owner.clone().into(),
+            token_address: cw_address.clone().into_string(),
+            amount: "50000".to_string(),
+        };
+        let _res = app
+            .execute_contract(owner.clone(), contract_address.clone(), &msg, &[])
+            .unwrap();
+
+        let msg = ExecuteMsg::WithdrawCw20 {
+            beneficiary: owner.clone().into(),
+            token_address: cw_address.clone().into_string(),
+            amount: "5000".into(),
+        };
+        let _res = app
+            .execute_contract(owner.clone(), contract_address.clone(), &msg, &[])
+            .unwrap();
+        //let msg = AdminExecuteMsg::
+    }
+
+    #[test]
+    fn withdraw_cw20_currency_after_receive_hook_deposit() {
+        let (mut app, contract_address) = setup_env();
+
+        let cw_address = create_cw20(
+            &mut app,
+            TEST_DENOM_CW20,
+            "cwtest",
+            TEST_CREATOR.clone(),
+            5000000,
+        );
+
+        let owner = Addr::unchecked(TEST_CREATOR);
+
+        let admin_msg = AdminExecuteMsg::AddValidCurrency {
+            currency_id: cw_address.to_string(),
+        };
+        let msg = ExecuteMsg::Admin(admin_msg);
+
+        let _res = app
+            .execute_contract(owner.clone(), contract_address.clone(), &msg, &[])
+            .unwrap();
+
+        // encode beneficiary
+        let beneficiary_data = to_binary(&owner.clone().to_string()).unwrap();
+        let msg = cw20_base::msg::ExecuteMsg::Send {
+            contract: contract_address.clone().into_string(),
+            amount: Uint128::from_str("500000").unwrap(),
+            msg: beneficiary_data,
+        };
+
+        let _res = app
+            .execute_contract(owner.clone(), cw_address.clone(), &msg, &[])
+            .unwrap();
+
+        let msg = ExecuteMsg::WithdrawCw20 {
+            beneficiary: owner.clone().into_string(),
+            token_address: cw_address.clone().into_string(),
+            amount: "50000".into(),
+        };
+        let _res = app
+            .execute_contract(owner.clone(), contract_address.clone(), &msg, &[])
+            .unwrap();
     }
 }

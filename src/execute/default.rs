@@ -56,8 +56,63 @@ pub fn dispatch_default(
             denom,
             amount,
         } => try_withdraw_native(deps, info, beneficiary, denom, amount),
+        ExecuteMsg::WithdrawCw20 {
+            beneficiary,
+            token_address,
+            amount,
+        } => try_withdraw_cw20(deps, info, beneficiary, token_address, amount),
         _ => Err(ContractError::Never {}),
     }
+}
+
+fn try_withdraw_cw20(
+    deps: DepsMut,
+    info: MessageInfo,
+    beneficiary: String,
+    token_address: String,
+    amount: String,
+) -> Result<Response, ContractError> {
+    if !state_reads::is_valid_currency(deps.as_ref(), token_address.clone())? {
+        return Err(ContractError::Cw20NotAccepted {
+            token_address: token_address,
+        });
+    }
+
+    let mut account = state_reads::get_currency_account(
+        deps.as_ref(),
+        info.sender.into_string(),
+        token_address.clone(),
+    )?;
+    let amount_num = Uint128::from_str(&amount)?;
+
+    if amount_num.u128() > account.available {
+        return Err(ContractError::InsufficientFundsAvailableForCw20Withdrawal {
+            currency_identifier: token_address,
+            available: account.available.to_string(),
+            required: amount,
+        });
+    }
+
+    account.available -= amount_num.u128();
+    state_writes::update_currency_account(
+        deps.storage,
+        beneficiary.clone(),
+        token_address.clone(),
+        account,
+    )?;
+
+    let msg = cw20::Cw20ExecuteMsg::Transfer {
+        recipient: beneficiary,
+        amount: amount_num,
+    };
+    let wasm_msg = WasmMsg::Execute {
+        contract_addr: token_address,
+        msg: to_binary(&msg)?,
+        funds: vec![],
+    };
+    let cosmos_msg = CosmosMsg::Wasm(wasm_msg);
+
+    return Ok(Response::new().add_message(cosmos_msg));
 }
 
 fn try_withdraw_native(

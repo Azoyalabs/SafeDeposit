@@ -55,6 +55,13 @@ pub enum ContractError {
         required: String,
     },
 
+    #[error("Not enough funds locked for cw20 withdrawal {currency_identifier} (available: {available}, required: {required})")]
+    InsufficientFundsAvailableForCw20Withdrawal {
+        currency_identifier: String,
+        available: String,
+        required: String,
+    },
+
     #[error("No Account found for the pair ({owner}, {currency_identifier})")]
     AccountNotFound {
         owner: String,
