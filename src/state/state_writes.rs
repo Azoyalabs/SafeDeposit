@@ -3,7 +3,7 @@ use cosmwasm_std::{Addr, Storage};
 
 use crate::state::state_entries::ADMIN;
 
-use super::state_entries::BALANCES;
+use super::state_entries::{BALANCES, VALID_CURRENCIES};
 
 pub mod admin {
     use crate::state::state_entries::AUTHORIZED_HANDLERS;
@@ -24,6 +24,23 @@ pub mod admin {
 
         return Ok(());
     }
+}
+
+pub fn add_valid_currency(
+    storage: &mut dyn Storage,
+    currency_identifier: String,
+) -> Result<(), ContractError> {
+    VALID_CURRENCIES.update(storage, |currencies| -> Result<_, ContractError> {
+        let mut currencies: Vec<String> = currencies
+            .into_iter()
+            .filter(|currency| currency_identifier.eq(currency))
+            .collect();
+        currencies.push(currency_identifier);
+
+        return Ok(currencies);
+    })?;
+
+    return Ok(());
 }
 
 pub fn update_deposit(

@@ -18,9 +18,18 @@ pub fn dispatch_admin(
         AdminExecuteMsg::SetAuthorizationStatus { target, new_status } => {
             try_set_authorization_status(deps, target, new_status)
         }
+        AdminExecuteMsg::AddValidCurrency { currency_id } => {
+            try_add_valid_currency(deps, currency_id)
+        }
         //_ => return Ok(Response::new()),
         _ => Err(ContractError::Never {}),
     }
+}
+
+fn try_add_valid_currency(deps: DepsMut, currency_id: String) -> Result<Response, ContractError> {
+    state_writes::add_valid_currency(deps.storage, currency_id)?;
+
+    return Ok(Response::new());
 }
 
 fn try_set_authorization_status(

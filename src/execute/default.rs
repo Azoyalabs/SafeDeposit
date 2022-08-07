@@ -186,6 +186,8 @@ fn try_deposit_native(
     info: MessageInfo,
     beneficiary: String,
 ) -> Result<Response, ContractError> {
+    //     return Ok(Response::new());
+
     // validate that beneficiary is a valid address
     match deps.api.addr_validate(beneficiary.as_str()) {
         Ok(_) => (),

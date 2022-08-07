@@ -5,4 +5,5 @@ use serde::{Deserialize, Serialize};
 #[serde(rename_all = "snake_case")]
 pub enum AdminExecuteMsg {
     SetAuthorizationStatus { target: String, new_status: bool },
+    AddValidCurrency { currency_id: String },
 }
