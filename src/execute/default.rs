@@ -1,7 +1,8 @@
 use std::str::FromStr;
 
 use cosmwasm_std::{
-    from_binary, to_binary, Binary, DepsMut, Env, MessageInfo, Response, Uint128, WasmMsg,
+    coin, from_binary, to_binary, BankMsg, Binary, CosmosMsg, DepsMut, Env, MessageInfo, Response,
+    Uint128, WasmMsg,
 };
 
 use crate::error::ContractError;
@@ -50,8 +51,55 @@ pub fn dispatch_default(
             amount,
             beneficiary,
         ),
+        ExecuteMsg::WithdrawNative {
+            beneficiary,
+            denom,
+            amount,
+        } => try_withdraw_native(deps, info, beneficiary, denom, amount),
         _ => Err(ContractError::Never {}),
     }
+}
+
+fn try_withdraw_native(
+    deps: DepsMut,
+    info: MessageInfo,
+    beneficiary: String,
+    denom: String,
+    amount: String,
+) -> Result<Response, ContractError> {
+    if !state_reads::is_valid_currency(deps.as_ref(), denom.clone())? {
+        return Err(ContractError::NativeCurrencyNotAccepted { denom: denom });
+    }
+
+    let mut account =
+        state_reads::get_currency_account(deps.as_ref(), info.sender.into_string(), denom.clone())?;
+    let amount_num = Uint128::from_str(&amount)?.u128();
+
+    if amount_num > account.available {
+        return Err(
+            ContractError::InsufficientFundsAvailableForNativeWithdrawal {
+                currency_identifier: denom,
+                available: account.available.to_string(),
+                required: amount,
+            },
+        );
+    }
+
+    account.available -= amount_num;
+    state_writes::update_currency_account(
+        deps.storage,
+        beneficiary.clone(),
+        denom.clone(),
+        account,
+    )?;
+
+    let bank_msg = BankMsg::Send {
+        to_address: beneficiary,
+        amount: vec![coin(amount_num, denom.clone())],
+    };
+    let transfer_msg = CosmosMsg::Bank(bank_msg);
+
+    return Ok(Response::new().add_message(transfer_msg));
 }
 
 fn try_transfer_lock(

@@ -175,6 +175,44 @@ mod tests {
     }
 
     #[test]
+    fn withdraw_native_currency() {
+        let (mut app, contract_address) = setup_env();
+
+        let owner = Addr::unchecked(TEST_CREATOR);
+
+        let admin_msg = AdminExecuteMsg::AddValidCurrency {
+            currency_id: TEST_DENOM_NATIVE.to_string(),
+        };
+        let msg = ExecuteMsg::Admin(admin_msg);
+
+        let _res = app
+            .execute_contract(owner.clone(), contract_address.clone(), &msg, &[])
+            .unwrap();
+
+        let msg = ExecuteMsg::DepositNative {
+            beneficiary: owner.clone().into(),
+        };
+        let _res = app
+            .execute_contract(
+                owner.clone(),
+                contract_address.clone(),
+                &msg,
+                &[coin(256000, TEST_DENOM_NATIVE.to_string())],
+            )
+            .unwrap();
+
+        let msg = ExecuteMsg::WithdrawNative {
+            beneficiary: owner.clone().into_string(),
+            denom: TEST_DENOM_NATIVE.to_string(),
+            amount: "50000".into(),
+        };
+        let _res = app
+            .execute_contract(owner.clone(), contract_address.clone(), &msg, &[])
+            .unwrap();
+        //let msg = AdminExecuteMsg::
+    }
+
+    #[test]
     fn deposit_cw20_currency_allowances() {
         let (mut app, contract_address) = setup_env();
 

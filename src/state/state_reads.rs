@@ -1,11 +1,11 @@
 use cosmwasm_std::{Addr, Deps};
 //use cw721::Approval;
 
-use crate::error::ContractError;
+use crate::{error::ContractError, structs::CurrencyAccount};
 
 use crate::state::state_entries::ADMIN;
 
-use super::state_entries::{AUTHORIZED_HANDLERS, VALID_CURRENCIES};
+use super::state_entries::{AUTHORIZED_HANDLERS, BALANCES, VALID_CURRENCIES};
 
 pub fn is_admin(deps: Deps, caller: Addr) -> Result<bool, ContractError> {
     let admin = ADMIN.load(deps.storage)?;
@@ -31,5 +31,18 @@ pub fn is_valid_currency(deps: Deps, currency_identifier: String) -> Result<bool
             })
         }
         Ok(identifiers) => return Ok(identifiers.contains(&currency_identifier)),
+    }
+}
+
+pub fn get_currency_account(
+    deps: Deps,
+    owner: String,
+    currency_identifier: String,
+) -> Result<CurrencyAccount, ContractError> {
+    let account = BALANCES.load(deps.storage, (owner, currency_identifier));
+
+    match account {
+        Ok(acc) => return Ok(acc),
+        Err(_) => return Ok(CurrencyAccount::new()),
     }
 }

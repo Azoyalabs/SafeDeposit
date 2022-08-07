@@ -43,6 +43,17 @@ pub fn add_valid_currency(
     return Ok(());
 }
 
+pub fn update_currency_account(
+    storage: &mut dyn Storage,
+    beneficiary: String,
+    currency_identifier: String,
+    account_data: CurrencyAccount,
+) -> Result<(), ContractError> {
+    BALANCES.save(storage, (beneficiary, currency_identifier), &account_data)?;
+
+    return Ok(());
+}
+
 pub fn update_deposit(
     storage: &mut dyn Storage,
     beneficiary: String,
