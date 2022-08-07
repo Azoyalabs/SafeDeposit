@@ -1,7 +1,10 @@
 #[cfg(test)]
 mod tests {
-    use cosmwasm_std::{coin, Addr, Empty};
+    use std::str::FromStr;
 
+    use cosmwasm_std::{coin, Addr, Empty, Uint128};
+
+    use cw20::Cw20Coin;
     use cw_multi_test::{App, BankSudo, Contract, ContractWrapper, Executor};
 
     use crate::contract::{execute, instantiate, query};
@@ -9,7 +12,8 @@ mod tests {
     use crate::execute_messages::msg_admin::AdminExecuteMsg;
     use crate::instantiation::msg::InstantiateMsg;
 
-    const TEST_DENOM: &str = "uusd";
+    const TEST_DENOM_NATIVE: &str = "test_native";
+    const TEST_DENOM_CW20: &str = "test_cw20";
     const TEST_CREATOR: &str = "creator";
     const _TEST_USER: &str = "user";
     const _TEST_USER2: &str = "user2";
@@ -39,13 +43,13 @@ mod tests {
         router
             .sudo(cw_multi_test::SudoMsg::Bank(BankSudo::Mint {
                 to_address: owner.clone().to_string(),
-                amount: vec![coin(50000000, "buddycoin")],
+                amount: vec![coin(50000000, TEST_DENOM_NATIVE)],
             }))
             .unwrap();
 
         let vault_contract_id = router.store_code(contract_vault());
 
-        let _cw20_contract_id = router.store_code(contract_cw20());
+        //let _cw20_contract_id = router.store_code(contract_cw20());
 
         let msg = InstantiateMsg {};
 
@@ -61,6 +65,43 @@ mod tests {
             .unwrap();
 
         return (router, mocked_contract_addr);
+    }
+
+    pub fn create_cw20(
+        router: &mut App,
+        name: &str,
+        symbol: &str,
+        beneficiary: &str,
+        amount: u128,
+    ) -> Addr {
+        let owner = Addr::unchecked(TEST_CREATOR);
+
+        let cw20_contract_id = router.store_code(contract_cw20());
+
+        let msg = cw20_base::msg::InstantiateMsg {
+            name: name.to_string(),
+            symbol: symbol.to_string(),
+            decimals: 6,
+            initial_balances: vec![Cw20Coin {
+                address: beneficiary.to_string(),
+                amount: Uint128::from(amount),
+            }],
+            mint: None,
+            marketing: None,
+        };
+
+        let mocked_contract_addr = router
+            .instantiate_contract(
+                cw20_contract_id,
+                owner.clone(),
+                &msg,
+                &[],
+                "token",
+                Some(owner.into()),
+            )
+            .unwrap();
+
+        return mocked_contract_addr;
     }
 
     #[test]
@@ -92,7 +133,7 @@ mod tests {
         let owner = Addr::unchecked(TEST_CREATOR);
 
         let admin_msg = AdminExecuteMsg::AddValidCurrency {
-            currency_id: "buddycoin".into(),
+            currency_id: TEST_DENOM_NATIVE.into(),
         };
         let msg = ExecuteMsg::Admin(admin_msg);
 
@@ -110,7 +151,7 @@ mod tests {
         let owner = Addr::unchecked(TEST_CREATOR);
 
         let admin_msg = AdminExecuteMsg::AddValidCurrency {
-            currency_id: "buddycoin".to_string(),
+            currency_id: TEST_DENOM_NATIVE.to_string(),
         };
         let msg = ExecuteMsg::Admin(admin_msg);
 
@@ -126,8 +167,54 @@ mod tests {
                 owner.clone(),
                 contract_address.clone(),
                 &msg,
-                &[coin(256000, "buddycoin".to_string())],
+                &[coin(256000, TEST_DENOM_NATIVE.to_string())],
             )
+            .unwrap();
+
+        //let msg = AdminExecuteMsg::
+    }
+
+    #[test]
+    fn deposit_cw20_currency_allowances() {
+        let (mut app, contract_address) = setup_env();
+
+        let cw_address = create_cw20(
+            &mut app,
+            TEST_DENOM_CW20,
+            "cwtest",
+            TEST_CREATOR.clone(),
+            5000000,
+        );
+
+        let owner = Addr::unchecked(TEST_CREATOR);
+
+        let admin_msg = AdminExecuteMsg::AddValidCurrency {
+            currency_id: cw_address.to_string(),
+        };
+        let msg = ExecuteMsg::Admin(admin_msg);
+
+        let _res = app
+            .execute_contract(owner.clone(), contract_address.clone(), &msg, &[])
+            .unwrap();
+
+        // need allowances
+        let msg = cw20_base::msg::ExecuteMsg::IncreaseAllowance {
+            spender: contract_address.clone().into_string(),
+            amount: Uint128::from_str("500000").unwrap(),
+            expires: None,
+        };
+        let _res = app
+            .execute_contract(owner.clone(), cw_address.clone(), &msg, &[])
+            .unwrap();
+
+        let msg = ExecuteMsg::DepositCw20 {
+            sender: owner.clone().into(),
+            beneficiary: owner.clone().into(),
+            token_address: cw_address.into_string(),
+            amount: "50000".to_string(),
+        };
+        let _res = app
+            .execute_contract(owner.clone(), contract_address.clone(), &msg, &[])
             .unwrap();
 
         //let msg = AdminExecuteMsg::
