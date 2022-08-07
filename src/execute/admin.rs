@@ -2,7 +2,7 @@ use cosmwasm_std::{DepsMut, Env, MessageInfo, Response};
 
 use crate::error::ContractError;
 use crate::execute_messages::msg_admin::AdminExecuteMsg;
-use crate::state::state_reads;
+use crate::state::{state_reads, state_writes};
 
 pub fn dispatch_admin(
     deps: DepsMut,
@@ -15,9 +15,26 @@ pub fn dispatch_admin(
     }
 
     match admin_msg {
+        AdminExecuteMsg::SetAuthorizationStatus { target, new_status } => {
+            try_set_authorization_status(deps, target, new_status)
+        }
         //_ => return Ok(Response::new()),
         _ => Err(ContractError::Never {}),
     }
+}
+
+fn try_set_authorization_status(
+    deps: DepsMut,
+    target: String,
+    new_status: bool,
+) -> Result<Response, ContractError> {
+    state_writes::admin::set_authorization_status(
+        deps.storage,
+        deps.api.addr_validate(&target)?,
+        new_status,
+    )?;
+
+    return Ok(Response::new());
 }
 
 fn _try_sample_execute(

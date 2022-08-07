@@ -5,10 +5,25 @@ use crate::state::state_entries::ADMIN;
 
 use super::state_entries::BALANCES;
 
-pub fn update_admin(storage: &mut dyn Storage, new_admin: Addr) -> Result<(), ContractError> {
-    ADMIN.save(storage, &new_admin).unwrap();
+pub mod admin {
+    use crate::state::state_entries::AUTHORIZED_HANDLERS;
 
-    return Ok(());
+    use super::*;
+    pub fn update_admin(storage: &mut dyn Storage, new_admin: Addr) -> Result<(), ContractError> {
+        ADMIN.save(storage, &new_admin).unwrap();
+
+        return Ok(());
+    }
+
+    pub fn set_authorization_status(
+        storage: &mut dyn Storage,
+        target: Addr,
+        new_status: bool,
+    ) -> Result<(), ContractError> {
+        AUTHORIZED_HANDLERS.save(storage, target, &new_status)?;
+
+        return Ok(());
+    }
 }
 
 pub fn update_deposit(
