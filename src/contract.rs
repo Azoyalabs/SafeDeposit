@@ -9,6 +9,7 @@ use crate::execute_messages::msg::{ExecuteMsg, MigrateMsg};
 
 use crate::instantiation;
 use crate::instantiation::msg::InstantiateMsg;
+use crate::query::query_execute::get_currency_account;
 use crate::query::query_message::QueryMsg;
 
 use crate::error::ContractError;
@@ -54,8 +55,12 @@ pub fn execute(
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn query(_deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
-        _ => return to_binary(&42),
+        QueryMsg::GetBalance {
+            account_owner,
+            currency_id,
+        } => to_binary(&get_currency_account(deps, account_owner, currency_id)),
+        //_ => return to_binary(&42),
     }
 }

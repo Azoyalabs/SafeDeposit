@@ -15,7 +15,8 @@ mod tests {
     const TEST_DENOM_NATIVE: &str = "test_native";
     const TEST_DENOM_CW20: &str = "test_cw20";
     const TEST_CREATOR: &str = "creator";
-    const _TEST_USER: &str = "user";
+    const ALLOWED_HANDLER: &str = "handler";
+    const TEST_USER: &str = "user";
     const _TEST_USER2: &str = "user2";
 
     const _TEST_PRICE: u64 = 10000000;
@@ -393,5 +394,64 @@ mod tests {
         let _res = app
             .execute_contract(owner.clone(), contract_address.clone(), &msg, &[])
             .unwrap();
+    }
+
+    #[test]
+    fn deposit_native_currency_and_lock_and_transfer_lock() {
+        let (mut app, contract_address) = setup_env();
+
+        let owner = Addr::unchecked(TEST_CREATOR);
+
+        let admin_msg = AdminExecuteMsg::AddValidCurrency {
+            currency_id: TEST_DENOM_NATIVE.to_string(),
+        };
+        let msg = ExecuteMsg::Admin(admin_msg);
+
+        let _res = app
+            .execute_contract(owner.clone(), contract_address.clone(), &msg, &[])
+            .unwrap();
+
+        let msg = ExecuteMsg::DepositNative {
+            beneficiary: owner.clone().into(),
+        };
+        let _res = app
+            .execute_contract(
+                owner.clone(),
+                contract_address.clone(),
+                &msg,
+                &[coin(256000, TEST_DENOM_NATIVE.to_string())],
+            )
+            .unwrap();
+
+        let admin_msg = AdminExecuteMsg::SetAuthorizationStatus {
+            target: ALLOWED_HANDLER.into(),
+            new_status: true,
+        };
+        let msg = ExecuteMsg::Admin(admin_msg);
+
+        let _res = app
+            .execute_contract(owner.clone(), contract_address.clone(), &msg, &[])
+            .unwrap();
+
+        let handler = Addr::unchecked(ALLOWED_HANDLER);
+        let msg = ExecuteMsg::Lock {
+            account: owner.clone().into(),
+            currency_identifier: TEST_DENOM_NATIVE.into(),
+            amount: "56000".into(),
+        };
+        let _res = app
+            .execute_contract(handler.clone(), contract_address.clone(), &msg, &[])
+            .unwrap();
+
+        let msg = ExecuteMsg::TransferLocked {
+            account: owner.clone().into(),
+            currency_identifier: TEST_DENOM_NATIVE.into(),
+            amount: "56000".into(),
+            beneficiary: TEST_USER.into(),
+        };
+        let _res = app
+            .execute_contract(handler.clone(), contract_address.clone(), &msg, &[])
+            .unwrap();
+        //let msg = AdminExecuteMsg::
     }
 }
