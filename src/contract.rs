@@ -9,7 +9,7 @@ use crate::execute_messages::msg::{ExecuteMsg, MigrateMsg};
 
 use crate::instantiation;
 use crate::instantiation::msg::InstantiateMsg;
-use crate::query::query_execute::get_currency_account;
+use crate::query::query_execute::{get_all_currency_accounts, get_currency_account};
 use crate::query::query_message::QueryMsg;
 
 use crate::error::ContractError;
@@ -61,6 +61,8 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
             account_owner,
             currency_id,
         } => to_binary(&get_currency_account(deps, account_owner, currency_id)),
-        //_ => return to_binary(&42),
+        QueryMsg::GetAllBalances { account_owner } => {
+            to_binary(&get_all_currency_accounts(deps, account_owner))
+        } //_ => return to_binary(&42),
     }
 }

@@ -10,3 +10,8 @@ pub struct SampleResponse {}
 pub struct CurrencyAccountResponse {
     pub account: CurrencyAccount,
 }
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct AllCurrencyAccountResponse {
+    pub accounts: Vec<CurrencyAccount>,
+}

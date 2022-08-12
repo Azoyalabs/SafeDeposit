@@ -8,4 +8,7 @@ pub enum QueryMsg {
         account_owner: String,
         currency_id: String,
     },
+    GetAllBalances {
+        account_owner: String,
+    },
 }

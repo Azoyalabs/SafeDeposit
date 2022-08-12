@@ -46,3 +46,22 @@ pub fn get_currency_account(
         Err(_) => return Ok(CurrencyAccount::new()),
     }
 }
+
+pub fn get_all_currency_accounts(
+    deps: Deps,
+    owner: String,
+) -> Result<Vec<CurrencyAccount>, ContractError> {
+    let all_currencies = VALID_CURRENCIES.load(deps.storage)?;
+
+    let accounts = all_currencies
+        .into_iter()
+        .map(
+            |currency_id| match BALANCES.load(deps.storage, (owner.clone(), currency_id)) {
+                Ok(val) => val,
+                Err(_) => CurrencyAccount::new(),
+            },
+        )
+        .collect();
+
+    return Ok(accounts);
+}

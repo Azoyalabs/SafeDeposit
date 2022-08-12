@@ -33,7 +33,7 @@ pub fn add_valid_currency(
     VALID_CURRENCIES.update(storage, |currencies| -> Result<_, ContractError> {
         let mut currencies: Vec<String> = currencies
             .into_iter()
-            .filter(|currency| currency_identifier.eq(currency))
+            .filter(|currency| !currency_identifier.eq(currency))
             .collect();
         currencies.push(currency_identifier);
 
